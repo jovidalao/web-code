@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
+import { ProjectView } from "@/features/projects/components/project-view";
 
-function page() {
+function Page() {
   return (
-    <div>
-      <Button>Click me</Button>
+    <div className="flex flex-col gap-2 p-2">
+      <ProjectView />
     </div>
   );
 }
 
-export default page;
+export default Page;

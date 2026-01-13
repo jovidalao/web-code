@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
+import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 function GitHubIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -24,7 +24,7 @@ function GitHubIcon(props: React.SVGProps<SVGSVGElement>) {
         d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"
       />
     </svg>
-  )
+  );
 }
 
 function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -47,62 +47,67 @@ function GoogleIcon(props: React.SVGProps<SVGSVGElement>) {
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
       />
     </svg>
-  )
+  );
 }
 
-export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isOAuthLoading, setIsOAuthLoading] = useState(false)
-  const router = useRouter()
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"div">) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
-      if (error) throw error
-      router.push('/protected')
+      });
+      if (error) throw error;
+      router.push("/");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleOAuthLogin = async (provider: 'github' | 'google') => {
-    const supabase = createClient()
-    setIsOAuthLoading(true)
-    setError(null)
+  const handleOAuthLogin = async (provider: "github" | "google") => {
+    const supabase = createClient();
+    setIsOAuthLoading(true);
+    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/oauth?next=/protected`,
+          redirectTo: `${window.location.origin}/auth/oauth?next=/`,
         },
-      })
-      if (error) throw error
+      });
+      if (error) throw error;
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
-      setIsOAuthLoading(false)
+      setError(error instanceof Error ? error.message : "An error occurred");
+      setIsOAuthLoading(false);
     }
-  }
+  };
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your email below to login to your account</CardDescription>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
@@ -137,8 +142,12 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading || isOAuthLoading}>
-                {isLoading ? 'Logging in...' : 'Login'}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading || isOAuthLoading}
+              >
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
               <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
                 <span className="relative z-10 bg-card px-2 text-muted-foreground">
@@ -149,7 +158,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => handleOAuthLogin('github')}
+                  onClick={() => handleOAuthLogin("github")}
                   disabled={isLoading || isOAuthLoading}
                 >
                   <GitHubIcon className="h-4 w-4" />
@@ -158,7 +167,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => handleOAuthLogin('google')}
+                  onClick={() => handleOAuthLogin("google")}
                   disabled={isLoading || isOAuthLoading}
                 >
                   <GoogleIcon className="h-4 w-4" />
@@ -167,8 +176,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{' '}
-              <Link href="/auth/sign-up" className="underline underline-offset-4">
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
                 Sign up
               </Link>
             </div>
@@ -176,5 +188,5 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
