@@ -46,6 +46,29 @@ export const useProjects = () => {
     setLoading(false);
   }, [supabase]);
 
+  // get project by id
+  const getProjectById = useCallback(
+    async (id: Project["id"]) => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        console.error("Error getting project by id:", error.message, {
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+        setError(error.message);
+        return null;
+      }
+      return data;
+    },
+    [supabase]
+  );
+
   // Create project
   const createProject = async (name?: string) => {
     const { data: session } = await supabase.auth.getSession();
@@ -144,5 +167,6 @@ export const useProjects = () => {
     updateProject,
     deleteProject,
     refetch: fetchProjects,
+    getProjectById,
   };
 };

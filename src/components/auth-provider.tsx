@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useContext,
   useEffect,
   useState,
   useCallback,
@@ -11,7 +10,6 @@ import {
 } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { ThemeProvider } from "next-themes";
 
 type AuthState = {
   user: User | null;
@@ -124,18 +122,7 @@ export function AuthProvider({
     [user, session, isLoading, refresh, signOut]
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        {children}
-      </ThemeProvider>
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // /**
