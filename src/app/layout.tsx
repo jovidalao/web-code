@@ -26,7 +26,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 服务端预取用户信息，避免客户端首次加载闪烁
   const supabase = await createClient();
   const {
     data: { user },

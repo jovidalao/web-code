@@ -9,7 +9,7 @@ export const demoGenerate = inngest.createFunction(
     await step.run("generate-text", async () => {
       const { text } = await generateText({
         model: opencode("opencode/glm-4.7-free"),
-        prompt: "输出出师表全文",
+        prompt: "Hello, tell me a short joke.",
       });
       return text;
     });

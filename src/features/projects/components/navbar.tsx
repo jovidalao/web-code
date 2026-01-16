@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CheckIcon, CloudCheckIcon, LoaderIcon } from "lucide-react";
+import { CloudCheckIcon, LoaderIcon } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 
 const font = Poppins({
@@ -43,16 +43,13 @@ function Navbar({ projectId }: { projectId: Project["id"] }) {
     const trimmedName = projectName?.trim();
     if (!trimmedName || trimmedName === project.name) return;
 
-    // 乐观更新：先更新 UI
     const previousName = project.name;
     setProject({ ...project, name: trimmedName });
 
-    // 后台更新
     const updated = await updateProject(project.id, { name: trimmedName });
     if (updated) {
       setProject(updated);
     } else {
-      // 失败则回滚
       setProject({ ...project, name: previousName });
     }
   };
