@@ -112,7 +112,7 @@ export const FileTreeItem = ({
                 <FileIcon className="size-4 shrink-0 text-muted-foreground" fileName={file.name} />
               </>
             )}
-            <span className="truncate flex-1">{file.name}</span>
+            <span className="truncate flex-1 text-foreground">{file.name}</span>
 
             {/* Show action buttons for folders on hover */}
             {isFolder && (

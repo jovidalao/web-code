@@ -1,5 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { File } from "@/types/file";
+import { useInlineInput } from "./use-inline-input";
 
 interface UseFileRenameProps {
   onRename: (fileId: string, newName: string) => Promise<void>;
@@ -8,86 +9,76 @@ interface UseFileRenameProps {
 
 export const useFileRename = ({ onRename, isNameTaken }: UseFileRenameProps) => {
   const [renamingFile, setRenamingFile] = useState<File | null>(null);
-  const [newName, setNewName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input when renaming starts
-  useEffect(() => {
-    if (renamingFile && inputRef.current) {
-      inputRef.current.focus();
-      // Select the name without extension
-      const dotIndex = renamingFile.name.lastIndexOf(".");
-      if (dotIndex > 0 && renamingFile.type === "file") {
-        inputRef.current.setSelectionRange(0, dotIndex);
-      } else {
-        inputRef.current.select();
+  const handleSubmit = useCallback(
+    async (name: string) => {
+      if (!renamingFile) return;
+
+      // Skip if name unchanged
+      if (name === renamingFile.name) {
+        setRenamingFile(null);
+        return;
       }
-    }
-  }, [renamingFile]);
 
-  const startRenaming = useCallback((file: File) => {
-    setRenamingFile(file);
-    setNewName(file.name);
-    setError(null);
-  }, []);
+      await onRename(renamingFile.id, name);
+      setRenamingFile(null);
+    },
+    [renamingFile, onRename]
+  );
 
   const cancelRenaming = useCallback(() => {
     setRenamingFile(null);
-    setNewName("");
-    setError(null);
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    if (!renamingFile || !newName.trim()) {
-      setError("Name cannot be empty");
-      return;
-    }
-
-    const trimmedName = newName.trim();
-
-    // Check if name is the same
-    if (trimmedName === renamingFile.name) {
-      cancelRenaming();
-      return;
-    }
-
-    // Check if name is taken
-    if (isNameTaken(trimmedName, renamingFile.parent_id ?? null, renamingFile.id)) {
-      setError("Name already exists");
-      return;
-    }
-
-    try {
-      await onRename(renamingFile.id, trimmedName);
-      cancelRenaming();
-    } catch (err) {
-      setError("Rename failed");
-      console.error("Rename error:", err);
-    }
-  }, [renamingFile, newName, isNameTaken, onRename, cancelRenaming]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSubmit();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        cancelRenaming();
+  const validate = useCallback(
+    (name: string) => {
+      if (!renamingFile) return null;
+      if (name === renamingFile.name) return null;
+      if (isNameTaken(name, renamingFile.parent_id ?? null, renamingFile.id)) {
+        return "Name already exists";
       }
+      return null;
     },
-    [handleSubmit, cancelRenaming]
+    [renamingFile, isNameTaken]
   );
 
-  const handleBlur = useCallback(() => {
-    // Small delay to allow click events to fire first
-    setTimeout(() => {
-      if (renamingFile) {
-        handleSubmit();
-      }
-    }, 100);
-  }, [renamingFile, handleSubmit]);
+  // Calculate selection range for file rename (select name without extension)
+  const selectRange = useMemo((): [number, number] | "all" => {
+    if (!renamingFile) return "all";
+    if (renamingFile.type === "folder") return "all";
+
+    const dotIndex = renamingFile.name.lastIndexOf(".");
+    if (dotIndex > 0) {
+      return [0, dotIndex];
+    }
+    return "all";
+  }, [renamingFile]);
+
+  const {
+    value: newName,
+    setValue: setNewName,
+    error,
+    inputRef,
+    handleKeyDown,
+    handleBlur,
+  } = useInlineInput({
+    onSubmit: handleSubmit,
+    onCancel: cancelRenaming,
+    validate,
+    selectRange,
+    active: renamingFile !== null,
+  });
+
+  // Sync initial value when renamingFile changes
+  useEffect(() => {
+    if (renamingFile) {
+      setNewName(renamingFile.name);
+    }
+  }, [renamingFile, setNewName]);
+
+  const startRenaming = useCallback((file: File) => {
+    setRenamingFile(file);
+  }, []);
 
   return {
     renamingFile,

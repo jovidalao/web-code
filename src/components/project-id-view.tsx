@@ -73,7 +73,7 @@ export const ProjectIdView = ({ projectId }: { projectId: Project["id"] }) => {
               <FileExplorer projectId={projectId} />
             </Allotment.Pane>
             <Allotment.Pane>
-              <p>Code Editor</p>
+              <p className="p-4 text-foreground">Code Editor</p>
             </Allotment.Pane>
           </Allotment>
         </div>
@@ -83,7 +83,7 @@ export const ProjectIdView = ({ projectId }: { projectId: Project["id"] }) => {
             activeTab === "preview" ? "visible" : "invisible"
           )}
         >
-          <div>Preview</div>
+          <div className="p-4 text-foreground">Preview</div>
         </div>
       </div>
     </div>

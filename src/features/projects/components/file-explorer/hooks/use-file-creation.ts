@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { FileType } from "@/types/file";
+import { useInlineInput } from "./use-inline-input";
 
 interface UseFileCreationProps {
   onSubmit: (name: string, type: FileType, parentId?: string) => Promise<void>;
@@ -13,84 +14,54 @@ export const useFileCreation = ({
   parentId = null,
 }: UseFileCreationProps) => {
   const [creating, setCreating] = useState<FileType | null>(null);
-  const [newName, setNewName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus the input when creating mode is activated
-  useEffect(() => {
-    if (creating) {
-      // Small delay to ensure DOM is rendered (especially when folder expands)
-      const timer = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [creating]);
-
-  const startCreating = useCallback((type: FileType) => {
-    setCreating(type);
-    setNewName("");
-    setError(null);
-  }, []);
+  const handleCreate = useCallback(
+    async (name: string) => {
+      await onSubmit(name, creating!, parentId ?? undefined);
+    },
+    [onSubmit, creating, parentId]
+  );
 
   const cancelCreating = useCallback(() => {
     setCreating(null);
-    setNewName("");
-    setError(null);
   }, []);
 
-  const handleCreate = useCallback(async () => {
-    const trimmedName = newName.trim();
-
-    if (!trimmedName) {
-      cancelCreating();
-      return;
-    }
-
-    // Check if name already exists
-    if (isNameTaken(trimmedName, parentId)) {
-      setError("Name already exists");
-      return;
-    }
-
-    await onSubmit(trimmedName, creating!, parentId ?? undefined);
-    cancelCreating();
-  }, [newName, creating, parentId, isNameTaken, onSubmit, cancelCreating]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleCreate();
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        cancelCreating();
+  const validate = useCallback(
+    (name: string) => {
+      if (isNameTaken(name, parentId)) {
+        return "Name already exists";
       }
+      return null;
     },
-    [handleCreate, cancelCreating]
+    [isNameTaken, parentId]
   );
 
-  const handleBlur = useCallback(() => {
-    // Submit on blur if there's a valid name, otherwise cancel
-    if (newName.trim()) {
-      handleCreate();
-    } else {
-      cancelCreating();
-    }
-  }, [newName, handleCreate, cancelCreating]);
+  const {
+    value: newName,
+    setValue: setNewName,
+    error,
+    inputRef,
+    handleKeyDown,
+    handleBlur,
+  } = useInlineInput({
+    onSubmit: handleCreate,
+    onCancel: cancelCreating,
+    validate,
+    active: creating !== null,
+  });
+
+  const startCreating = useCallback((type: FileType) => {
+    setCreating(type);
+  }, []);
 
   return {
-    // State
     creating,
     newName,
     error,
     inputRef,
-    // Actions
     startCreating,
     cancelCreating,
     setNewName,
-    // Handlers
     handleKeyDown,
     handleBlur,
   };

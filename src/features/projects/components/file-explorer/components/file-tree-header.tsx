@@ -36,7 +36,7 @@ export const FileTreeHeader = ({
           isExpanded && "rotate-90"
         )}
       />
-      <p className="text-xs line-clamp-1 uppercase">
+      <p className="text-xs line-clamp-1 uppercase text-accent-foreground">
         {isLoading ? "Loading..." : projectName}
       </p>
       <div className="opacity-0 group-hover/project:opacity-100 transition-none duration-0 flex items-center gap-0.5 ml-auto">

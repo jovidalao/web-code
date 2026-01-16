@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CheckIcon, CloudCheckIcon, LoaderIcon } from "lucide-react";
+import { CloudCheckIcon, LoaderIcon } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 
 const font = Poppins({

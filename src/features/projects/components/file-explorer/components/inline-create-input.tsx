@@ -44,6 +44,7 @@ export const InlineCreateInput = ({
           autoFocus
           className={cn(
             "flex-1 h-[18px] text-xs px-1 py-0",
+            "bg-background text-foreground",
             "border rounded-none outline-none",
             "focus:ring-0",
             error
