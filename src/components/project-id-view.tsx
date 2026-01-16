@@ -1,9 +1,16 @@
 "use client";
 
+import { FileExplorer } from "@/features/projects/components/file-explorer";
 import { cn } from "@/lib/utils";
 import { Project } from "@/types/project";
+import { Allotment } from "allotment";
 import { useState } from "react";
 import { FaGithub } from "react-icons/fa";
+
+const DEFAULT_SIDEBAR_WIDTH = 250;
+const DEFAULT_MAIN_WIDTH = 1000;
+const MIN_SIDEBAR_WIDTH = 150;
+const MAX_SIDEBAR_WIDTH = 400;
 
 const Tab = ({
   lable,
@@ -56,7 +63,19 @@ export const ProjectIdView = ({ projectId }: { projectId: Project["id"] }) => {
             activeTab === "code" ? "visible" : "invisible"
           )}
         >
-          <div>Code Editor</div>
+          <Allotment defaultSizes={[DEFAULT_SIDEBAR_WIDTH, DEFAULT_MAIN_WIDTH]}>
+            <Allotment.Pane
+              snap
+              minSize={MIN_SIDEBAR_WIDTH}
+              maxSize={MAX_SIDEBAR_WIDTH}
+              preferredSize={DEFAULT_SIDEBAR_WIDTH}
+            >
+              <FileExplorer projectId={projectId} />
+            </Allotment.Pane>
+            <Allotment.Pane>
+              <p>Code Editor</p>
+            </Allotment.Pane>
+          </Allotment>
         </div>
         <div
           className={cn(
