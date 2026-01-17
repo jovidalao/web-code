@@ -5,6 +5,7 @@ import { Project } from "@/types/project";
 import { useState, useEffect, useCallback } from "react";
 import { useProjects } from "@/features/projects/hooks/use-projects";
 import { useFiles } from "@/features/projects/hooks/use-files";
+import { useEditor } from "@/features/editor/hooks/use-editor";
 import { FileTreeHeader } from "./components/file-tree-header";
 import { FileTreeItem } from "./components/file-tree-item";
 import { InlineCreateInput } from "./components/inline-create-input";
@@ -28,6 +29,7 @@ export const FileExplorer = ({
 
   const { getProjectById } = useProjects();
   const { createFile, isNameTaken, getChildren, renameFile, deleteFile } = useFiles(projectId);
+  const { openFile, closeTab, activeTabId } = useEditor(projectId);
 
   const handleSubmitCreate = useCallback(
     async (name: string, type: FileType, parentId?: string) => {
@@ -81,26 +83,24 @@ export const FileExplorer = ({
     isNameTaken,
   });
 
-  const handleDelete = useCallback((file: File) => {
+  const handleDelete = (file: File) => {
     setFileToDelete(file);
     setDeleteDialogOpen(true);
-  }, []);
+  };
 
-  const handleConfirmDelete = useCallback(async () => {
+  const handleConfirmDelete = async () => {
     if (fileToDelete) {
       await deleteFile(fileToDelete.id);
+      closeTab(fileToDelete.id);
       setFileToDelete(null);
       setDeleteDialogOpen(false);
     }
-  }, [fileToDelete, deleteFile]);
+  };
 
-  const handleStartCreatingInFolder = useCallback(
-    (parentId: string, type: FileType) => {
-      setCreatingInParent(parentId);
-      startCreating(type);
-    },
-    [startCreating]
-  );
+  const handleStartCreatingInFolder = (parentId: string, type: FileType) => {
+    setCreatingInParent(parentId);
+    startCreating(type);
+  };
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -135,6 +135,10 @@ export const FileExplorer = ({
     startCreating("folder");
   };
 
+  const handleFileSelect = (file: File) => {
+    openFile(file.id, { pinned: false });
+  };
+
   const renderFileTree = (parentId: string | null, depth: number): React.ReactNode => {
     const children = getChildren(parentId);
 
@@ -159,6 +163,7 @@ export const FileExplorer = ({
             key={file.id}
             file={file}
             depth={depth}
+            isActive={activeTabId === file.id}
             onCreateFile={(folderId) => handleStartCreatingInFolder(folderId, "file")}
             onCreateFolder={(folderId) => handleStartCreatingInFolder(folderId, "folder")}
             onRename={startRenaming}
@@ -170,6 +175,8 @@ export const FileExplorer = ({
             onRenamingKeyDown={handleRenamingKeyDown}
             onRenamingBlur={handleRenamingBlur}
             renamingInputRef={renamingInputRef}
+            onDoubleClick={() => openFile(file.id, { pinned: true })}
+            onSelect={handleFileSelect}
           >
             {file.type === "folder" && renderFileTree(file.id, depth + 1)}
           </FileTreeItem>
