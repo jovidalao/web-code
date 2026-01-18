@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { File, CreateFileInput, UpdateFileInput } from "@/types/file";
+import { Project } from "@/types/project";
 import { useEffect, useState, useCallback } from "react";
 
 export const useFiles = (projectId: string) => {
@@ -211,9 +212,9 @@ export const useFiles = (projectId: string) => {
   // Returns array of files from root to current file
   // Example: [{ name: "src" }, { name: "components" }, { name: "button.tsx" }]
   const getFilePath = useCallback(
-    (fileId: string): File[] => {
+    (fileId: File["id"]): File[] => {
       const path: File[] = [];
-      let currentId: string | null | undefined = fileId;
+      let currentId: File["id"] | null | undefined = fileId;
 
       // Traverse up the tree until we reach root
       while (currentId) {
