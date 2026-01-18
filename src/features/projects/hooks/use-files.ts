@@ -207,6 +207,28 @@ export const useFiles = (projectId: string) => {
     return rootFiles.map(buildNode);
   }, [files]);
 
+  // Get file path for breadcrumbs navigation
+  // Returns array of files from root to current file
+  // Example: [{ name: "src" }, { name: "components" }, { name: "button.tsx" }]
+  const getFilePath = useCallback(
+    (fileId: string): File[] => {
+      const path: File[] = [];
+      let currentId: string | null | undefined = fileId;
+
+      // Traverse up the tree until we reach root
+      while (currentId) {
+        const file = files.find((f) => f.id === currentId);
+        if (!file) break;
+
+        path.unshift(file); // Add to beginning of array
+        currentId = file.parent_id;
+      }
+
+      return path;
+    },
+    [files]
+  );
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       fetchFiles();
@@ -226,6 +248,7 @@ export const useFiles = (projectId: string) => {
     getFileById,
     // Helpers
     getChildren,
+    getFilePath,
     moveFile,
     renameFile,
     isNameTaken,

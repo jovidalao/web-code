@@ -1,5 +1,6 @@
 "use client";
 
+import { EditorView } from "@/features/editor/components/editor-view";
 import { FileExplorer } from "@/features/projects/components/file-explorer";
 import { cn } from "@/lib/utils";
 import { Project } from "@/types/project";
@@ -73,7 +74,7 @@ export const ProjectIdView = ({ projectId }: { projectId: Project["id"] }) => {
               <FileExplorer projectId={projectId} />
             </Allotment.Pane>
             <Allotment.Pane>
-              <p className="p-4 text-foreground">Code Editor</p>
+              <EditorView projectId={projectId} />
             </Allotment.Pane>
           </Allotment>
         </div>
