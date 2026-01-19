@@ -7,14 +7,17 @@ import { CodeEditor } from "./code-editor";
 import { useRef } from "react";
 
 const DEBOUNCE_TIMEOUT = 1500;
+
 export const EditorView = ({ projectId }: { projectId: string }) => {
   const { activeTabId } = useEditor(projectId);
-  const { files } = useFiles(projectId);
+  const { files, updateFile } = useFiles(projectId);
 
   const activeFile = files.find(f => f.id === activeTabId);
   const fileName = activeFile?.name ?? "";
-  const updateFile = useFiles(projectId).updateFile;
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const isActiveFileBinary = activeFile && activeFile.storage_id
+  const isActiveFileText = activeFile && !activeFile.storage_id
 
   return (
     <div className="h-full flex flex-col">
@@ -31,7 +34,7 @@ export const EditorView = ({ projectId }: { projectId: string }) => {
           )
         }
         {
-          activeFile && (
+          isActiveFileText && (
             <CodeEditor
               key={activeTabId}
               fileName={fileName}
@@ -45,6 +48,13 @@ export const EditorView = ({ projectId }: { projectId: string }) => {
                 }, DEBOUNCE_TIMEOUT);
               }}
             />
+          )
+        }
+        {
+          isActiveFileBinary && (
+            <div className="size-full flex items-center justify-center">
+              <Image src="/vercel.svg" alt="Web Code" width={50} height={50} className="opacity-25" />
+            </div>
           )
         }
       </div>

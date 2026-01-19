@@ -20,7 +20,7 @@ export const FileExplorer = ({
 }: {
   projectId: Project["id"];
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [project, setProject] = useState<Project | null>(null);
   const [collapseKey, setCollapseKey] = useState(0);
   const [creatingInParent, setCreatingInParent] = useState<string | null>(null);

@@ -1,170 +1,63 @@
-import { createClient } from "@/lib/supabase/client";
-import { File, CreateFileInput, UpdateFileInput } from "@/types/file";
-import { Project } from "@/types/project";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect } from "react";
+
+import { CreateFileInput, File, UpdateFileInput } from "@/types/file";
+import { EMPTY_PROJECT_STATE, useFilesStore } from "@/features/projects/store/use-files-store";
 
 export const useFiles = (projectId: string) => {
-  const [files, setFiles] = useState<File[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const projectState = useFilesStore(
+    (state) => state.projects.get(projectId) ?? EMPTY_PROJECT_STATE
+  );
+  const fetchFiles = useFilesStore((state) => state.fetchFiles);
+  const createFileAction = useFilesStore((state) => state.createFile);
+  const updateFileAction = useFilesStore((state) => state.updateFile);
+  const deleteFileAction = useFilesStore((state) => state.deleteFile);
 
-  const supabase = createClient();
+  const { files, loading, error, fetched } = projectState;
 
-  // Fetch all files for the project
-  const fetchFiles = useCallback(async () => {
-    if (!projectId) {
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (!projectId) return;
+    if (!fetched && !loading) {
+      fetchFiles(projectId);
     }
+  }, [projectId, fetched, loading, fetchFiles]);
 
-    setLoading(true);
-    setError(null);
-
-    const { data, error } = await supabase
-      .from("files")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("type", { ascending: true }) // folders first
-      .order("name", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching files:", error.message, {
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      });
-      setError(error.message);
-    } else {
-      setFiles(data || []);
-    }
-
-    setLoading(false);
-  }, [supabase, projectId]);
-
-  // Get file by id
-  const getFileById = useCallback(
-    async (id: File["id"]) => {
-      const { data, error } = await supabase
-        .from("files")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        console.error("Error getting file by id:", error.message, {
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        setError(error.message);
-        return null;
-      }
-      return data;
+  const createFile = useCallback(
+    async (input: CreateFileInput) => {
+      return createFileAction(projectId, input);
     },
-    [supabase]
+    [createFileAction, projectId]
   );
 
-  // Get children of a folder (from local state)
+  const updateFile = useCallback(
+    async (id: string, updates: UpdateFileInput) => {
+      return updateFileAction(projectId, id, updates);
+    },
+    [updateFileAction, projectId]
+  );
+
+  const deleteFile = useCallback(
+    async (id: string) => {
+      return deleteFileAction(projectId, id);
+    },
+    [deleteFileAction, projectId]
+  );
+
+  const getFileById = useCallback(
+    async (id: File["id"]) => {
+      return files.find((file) => file.id === id) ?? null;
+    },
+    [files]
+  );
+
   const getChildren = useCallback(
     (parentId: string | null) => {
-      return files.filter((f) =>
-        parentId === null ? !f.parent_id : f.parent_id === parentId
+      return files.filter((file) =>
+        parentId === null ? !file.parent_id : file.parent_id === parentId
       );
     },
     [files]
   );
 
-  // Create file or folder
-  const createFile = useCallback(
-    async (input: CreateFileInput) => {
-      const { data, error } = await supabase
-        .from("files")
-        .insert({
-          ...input,
-          project_id: projectId,
-          updated_at: Date.now(),
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating file:", error.message, {
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        setError(error.message);
-        return null;
-      }
-
-      setFiles((prev) => [...prev, data]);
-      return data;
-    },
-    [supabase, projectId]
-  );
-
-  // Update file
-  const updateFile = useCallback(
-    async (id: string, updates: UpdateFileInput) => {
-      const { data, error } = await supabase
-        .from("files")
-        .update({ ...updates, updated_at: Date.now() })
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error updating file:", error.message, {
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        setError(error.message);
-        return null;
-      }
-
-      setFiles((prev) => prev.map((f) => (f.id === id ? data : f)));
-      return data;
-    },
-    [supabase]
-  );
-
-  // Delete file (and children if folder)
-  const deleteFile = useCallback(
-    async (id: string) => {
-      // Get all descendant ids to delete
-      const getDescendantIds = (parentId: string): string[] => {
-        const children = files.filter((f) => f.parent_id === parentId);
-        return children.flatMap((child) => [
-          child.id,
-          ...getDescendantIds(child.id),
-        ]);
-      };
-
-      const idsToDelete = [id, ...getDescendantIds(id)];
-
-      const { error } = await supabase
-        .from("files")
-        .delete()
-        .in("id", idsToDelete);
-
-      if (error) {
-        console.error("Error deleting file:", error.message, {
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-        });
-        setError(error.message);
-        return false;
-      }
-
-      setFiles((prev) => prev.filter((f) => !idsToDelete.includes(f.id)));
-      return true;
-    },
-    [supabase, files]
-  );
-
-  // Move file to a different parent
   const moveFile = useCallback(
     async (id: string, newParentId: string | null) => {
       return updateFile(id, { parent_id: newParentId ?? undefined });
@@ -172,7 +65,6 @@ export const useFiles = (projectId: string) => {
     [updateFile]
   );
 
-  // Rename file
   const renameFile = useCallback(
     async (id: string, newName: string) => {
       return updateFile(id, { name: newName });
@@ -180,25 +72,25 @@ export const useFiles = (projectId: string) => {
     [updateFile]
   );
 
-  // Check if name exists in the same folder
   const isNameTaken = useCallback(
     (name: string, parentId: string | null, excludeId?: string) => {
       return files.some(
-        (f) =>
-          f.name.toLowerCase() === name.toLowerCase() &&
-          (parentId === null ? !f.parent_id : f.parent_id === parentId) &&
-          f.id !== excludeId
+        (file) =>
+          file.name.toLowerCase() === name.toLowerCase() &&
+          (parentId === null
+            ? !file.parent_id
+            : file.parent_id === parentId) &&
+          file.id !== excludeId
       );
     },
     [files]
   );
 
-  // Build tree structure from flat files
   const buildTree = useCallback(() => {
-    const rootFiles = files.filter((f) => !f.parent_id);
+    const rootFiles = files.filter((file) => !file.parent_id);
 
     const buildNode = (file: File): File & { children: File[] } => {
-      const children = files.filter((f) => f.parent_id === file.id);
+      const children = files.filter((child) => child.parent_id === file.id);
       return {
         ...file,
         children: children.map(buildNode),
@@ -208,20 +100,16 @@ export const useFiles = (projectId: string) => {
     return rootFiles.map(buildNode);
   }, [files]);
 
-  // Get file path for breadcrumbs navigation
-  // Returns array of files from root to current file
-  // Example: [{ name: "src" }, { name: "components" }, { name: "button.tsx" }]
   const getFilePath = useCallback(
     (fileId: File["id"]): File[] => {
       const path: File[] = [];
       let currentId: File["id"] | null | undefined = fileId;
 
-      // Traverse up the tree until we reach root
       while (currentId) {
-        const file = files.find((f) => f.id === currentId);
+        const file = files.find((candidate) => candidate.id === currentId);
         if (!file) break;
 
-        path.unshift(file); // Add to beginning of array
+        path.unshift(file);
         currentId = file.parent_id;
       }
 
@@ -230,30 +118,20 @@ export const useFiles = (projectId: string) => {
     [files]
   );
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      fetchFiles();
-    }, 0);
-
-    return () => clearTimeout(timeout);
-  }, [fetchFiles]);
-
   return {
     files,
     loading,
     error,
-    // CRUD
     createFile,
     updateFile,
     deleteFile,
     getFileById,
-    // Helpers
     getChildren,
     getFilePath,
     moveFile,
     renameFile,
     isNameTaken,
     buildTree,
-    refetch: fetchFiles,
+    refetch: () => fetchFiles(projectId),
   };
 };
