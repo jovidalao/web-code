@@ -13,25 +13,27 @@ import { getItemPadding } from "../constants";
 interface FileTreeItemProps {
   file: File;
   depth?: number;
+  isActive?: boolean;
   onSelect?: (file: File) => void;
   onCreateFile?: (parentId: string) => void;
   onCreateFolder?: (parentId: string) => void;
   onRename?: (file: File) => void;
   onDelete?: (file: File) => void;
   children?: React.ReactNode;
-  // Rename state
   isRenaming?: boolean;
   renamingValue?: string;
   renamingError?: string | null;
   onRenamingChange?: (value: string) => void;
   onRenamingKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onRenamingBlur?: () => void;
+  onDoubleClick?: (file: File) => void;
   renamingInputRef?: RefObject<HTMLInputElement | null>;
 }
 
 export const FileTreeItem = ({
   file,
   depth = 0,
+  isActive = false,
   onSelect,
   onCreateFile,
   onCreateFolder,
@@ -44,6 +46,7 @@ export const FileTreeItem = ({
   onRenamingChange,
   onRenamingKeyDown,
   onRenamingBlur,
+  onDoubleClick,
   renamingInputRef,
 }: FileTreeItemProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -53,7 +56,13 @@ export const FileTreeItem = ({
     if (isFolder) {
       setIsExpanded((prev) => !prev);
     }
-    onSelect?.(file);
+    if (!isFolder) {
+      onSelect?.(file);
+    }
+  };
+
+  const handleDoubleClick = () => {
+    onDoubleClick?.(file);
   };
 
   const handleCreateFile = () => {
@@ -93,7 +102,11 @@ export const FileTreeItem = ({
           <div
             role="button"
             onClick={handleClick}
-            className="group/item flex items-center gap-1 h-6 px-1 hover:bg-accent/50 cursor-pointer text-xs"
+            onDoubleClick={handleDoubleClick}
+            className={cn(
+              "group/item flex items-center gap-1 h-6 px-1 cursor-pointer text-xs",
+              isActive ? "bg-accent" : "hover:bg-accent/50"
+            )}
             style={{ paddingLeft: `${getItemPadding(depth)}px` }}
           >
             {isFolder ? (
