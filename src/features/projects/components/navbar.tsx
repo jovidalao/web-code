@@ -1,7 +1,7 @@
 "use client";
 import { Project } from "@/types/project";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,6 +16,7 @@ import { Poppins } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { UserNavAvatar } from "@/components/user-nav-avatar";
 import { useProjects } from "../hooks/use-projects";
+import { useFiles } from "@/features/projects/hooks/use-files";
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
@@ -32,6 +33,7 @@ const font = Poppins({
 
 function Navbar({ projectId }: { projectId: Project["id"] }) {
   const { getProjectById, updateProject } = useProjects();
+  const { files } = useFiles(projectId);
   const [project, setProject] = useState<Project | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [projectName, setProjectName] = useState<string | null>(null);
@@ -63,6 +65,30 @@ function Navbar({ projectId }: { projectId: Project["id"] }) {
   useEffect(() => {
     getProjectById(projectId).then(setProject);
   }, [projectId, getProjectById]);
+
+  const savedAt = useMemo(() => {
+    const fileTimestamp =
+      files.length > 0 ? Math.max(...files.map((file) => file.updated_at)) : null;
+    const projectTimestamp = project?.updated_at
+      ? Date.parse(project.updated_at)
+      : null;
+
+    const validFileTimestamp =
+      typeof fileTimestamp === "number" && !Number.isNaN(fileTimestamp)
+        ? fileTimestamp
+        : null;
+    const validProjectTimestamp =
+      typeof projectTimestamp === "number" && !Number.isNaN(projectTimestamp)
+        ? projectTimestamp
+        : null;
+
+    if (validFileTimestamp !== null && validProjectTimestamp !== null) {
+      return Math.max(validFileTimestamp, validProjectTimestamp);
+    }
+    if (validFileTimestamp !== null) return validFileTimestamp;
+    if (validProjectTimestamp !== null) return validProjectTimestamp;
+    return null;
+  }, [files, project?.updated_at]);
 
   return (
     <nav className="flex justify-between items-center gap-x-2 p-2 bg-sidebar border-b">
@@ -121,14 +147,15 @@ function Navbar({ projectId }: { projectId: Project["id"] }) {
             <TooltipContent>Importing project...</TooltipContent>
           </Tooltip>
         ) : (
-          project?.created_at && (
+          project?.created_at &&
+          savedAt !== null && (
             <Tooltip onOpenChange={() => forceUpdate((n) => n + 1)}>
               <TooltipTrigger>
                 <CloudCheckIcon className="size-4 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent>
                 Saved{" "}
-                {formatDistanceToNowStrict(project.updated_at, {
+                {formatDistanceToNowStrict(savedAt, {
                   addSuffix: true,
                 })}
               </TooltipContent>
