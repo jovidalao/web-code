@@ -9,6 +9,7 @@ import { keymap } from "@codemirror/view";
 import { minimap } from "../extensions/minimap";
 import { indentationMarkers } from "@replit/codemirror-indentation-markers"
 import { customSetup } from "../extensions/custom-setup";
+import { suggestion } from "../extensions/suggestion";
 
 interface Props {
   fileName: File["name"]
@@ -29,6 +30,7 @@ export const CodeEditor = ({ fileName, content, onChange }: Props) => {
       extensions: [
         customSetup,
         oneDark,
+        suggestion(fileName),
         customTheme,
         languageExtension,
         keymap.of([
